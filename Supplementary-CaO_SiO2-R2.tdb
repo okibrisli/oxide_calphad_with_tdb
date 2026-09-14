@@ -1,0 +1,324 @@
+$ TDB FILE FOR CAO-SIO2 SYSTEM $
+$ TDB PRODUCED BY WAHAB ABDUL $
+
+$-----------------------------------------------
+$ ELEMENT L = CAO 
+$ ELEMENT Q = SIO2
+ELEMENT L BLANK 56.0774 0.0 0.0 !
+ELEMENT Q BLANK 60.08 0.0 0.0 !
+$-----------------------------------------------
+$ ASSOCIATES DEFINED HERE
+SPECIES C2SL L2Q1 !
+SPECIES CAOL L1 !
+SPECIES CSL L1Q1 !
+SPECIES SIO2L Q1 !
+$-----------------------------------------------
+$              SOLID PHASE FUNCTIONS           $
+$ solid functions use the 3rd generation function
+$ function is split apart to implement maximum 
+$ compatability with software.
+$-----------------------------------------------
+$                 ALPHA C2S                    $
+$-----------------------------------------------
+$ Einstein Terms $
+FUNCTION AC2S0 1 (1 - EXP(-427.508038/T)); 10000 N !
+FUNCTION AC2S1 1 (1 - EXP(-174.273816/T)); 10000 N !
+FUNCTION AC2S2 1 (1 - EXP(-1235.840109/T)); 10000 N !
+
+FUNCTION GAC2S 1 -2316104.80639131 + 50.6232292353224 * T *
+   LN(AC2S2)-0.008061 * T**(2) + 82.5742623603897 * T * LN(AC2S0) +
+   41.4017086323043 * T * LN(AC2S1); 3000 N !
+$-----------------------------------------------
+$                 ALPHA PRIME C2S              $
+$-----------------------------------------------
+FUNCTION APC2S0 1 (1 - EXP(-1092.028025/T)); 10000 N !
+FUNCTION APC2S1 1 (1 - EXP(-315.618264/T)); 10000 N !
+FUNCTION APC2S2 1 (1 - EXP(-122.320053/T)); 10000 N !
+
+FUNCTION GAPC2S 1 -2324937.35232995-0.005737 * T**(2) + 15.631497357245 * T *
+   LN(APC2S2) + 68.7466957561671 * T * LN(APC2S0) + 90.0024531502235 * T *
+   LN(APC2S1); 3000 N !
+$-----------------------------------------------
+$                 BETA C2S                     $
+$-----------------------------------------------
+FUNCTION BC2S0 1 (1 - EXP(-2585.222081/T)); 10000 N !
+FUNCTION BC2S1 1 (1 - EXP(-835.357211/T)); 10000 N !
+FUNCTION BC2S2 1 (1 - EXP(-259.231418/T)); 10000 N !
+
+FUNCTION GBC2S 1 -2328266.62444862-0.008614 * T**(2) + 87.5281189618368 * T *
+   LN(BC2S2) + 11.2908490028119 * T * LN(BC2S0) + 75.7757673969417 * T *
+   LN(BC2S1); 3000 N !
+
+$-----------------------------------------------
+$                GAMMA C2S                     $
+$-----------------------------------------------
+FUNCTION GC2S0 1 (1 - EXP(-88.647382/T)); 10000 N !
+FUNCTION GC2S1 1 (1 - EXP(-257.3199/T)); 10000 N !
+FUNCTION GC2S2 1 (1 - EXP(-759.369678/T)); 10000 N !
+
+FUNCTION GGC2S 1 -2336268.1787659 + 103.720069300784 * T *
+   LN(GC2S2)-0.001096 * T**(2) + 3.7837123904187 * T * LN(GC2S0) +
+   67.0926997075379 * T * LN(GC2S1); 3000 N !
+$-----------------------------------------------
+$             ALPHA CRISTOBALITE               $
+$-----------------------------------------------
+FUNCTION ACRIS0 1 (1 - EXP(-100.17/T)); 10000 N !
+FUNCTION ACRIS1 1 (1 - EXP(-374.45/T)); 10000 N !
+FUNCTION ACRIS2 1 (1 - EXP(-1134/T)); 10000 N !
+
+FUNCTION GACRIS 1 -914067.250936864 + 38.9116850529572 * T * LN(ACRIS2) +
+   7.23358247779332 * T * LN(ACRIS0) + 28.6848960326287 * T * LN(ACRIS1);
+   6000 N !
+$-----------------------------------------------
+$             BETA CRISTOBALITE                $
+$-----------------------------------------------
+FUNCTION BCRIS0 1 (1 - EXP(-125.65/T)); 10000 N !
+FUNCTION BCRIS1 1 (1 - EXP(-966.5/T)); 10000 N !
+
+FUNCTION GBCRIS 1 -912412.146717818 + 55.2052048672473 * T * LN(BCRIS1) +
+   19.6249586961318 * T * LN(BCRIS0); 6000 N !
+$-----------------------------------------------
+$             ALPHA QUARTZ                     $
+$-----------------------------------------------
+FUNCTION AQUARTZ0 1 (1 - EXP(-159.2/T)); 10000 N !
+FUNCTION AQUARTZ1 1 (1 - EXP(-524/T)); 10000 N !
+FUNCTION AQUARTZ2 1 (1 - EXP(-1421/T)); 10000 N !
+FUNCTION AQUARTZ3 1 (1 - EXP(-159.2/T)); 10000 N !
+FUNCTION AQUARTZ4 1 (1 - EXP(-524/T)); 10000 N !
+FUNCTION AQUARTZ5 1 (1 - EXP(-1421/T)); 10000 N !
+
+FUNCTION GAQUARTZ 1 -917661.326977757-1.076E-12 * T**(5) + 13.3696558899904 *
+   T * LN(AQUARTZ0) + 29.0341034625911 * T * LN(AQUARTZ2) +
+   32.4264042107976 * T * LN(AQUARTZ1); 847.1 Y
+   -914725.826977757-9.16882E+33 * T**(-11) + 32.4264042107976 * T *
+   LN(AQUARTZ1) + 13.3696558899904 * T * LN(AQUARTZ0) + 29.0341034625911 *
+   T * LN(AQUARTZ2)-2.72959E+16 * T**(-5)-3.87837 * T; 6000 N !
+$-----------------------------------------------
+$             BETA QUARTZ                      $
+$-----------------------------------------------
+FUNCTION BQUARTZ0 1 (1 - EXP(-66.518134/T)); 10000 N !
+FUNCTION BQUARTZ1 1 (1 - EXP(-1024.54773/T)); 10000 N !
+
+FUNCTION GBQUARTZ 1 -913771.02970493 + 59.8851830700525 * T * LN(BQUARTZ1) +
+   14.9449804933267 * T * LN(BQUARTZ0); 6000 N !
+$-----------------------------------------------
+$             CAO                              $
+$-----------------------------------------------
+FUNCTION CAO0 1 (1 - EXP(-314.8272896/T)); 10000 N !
+FUNCTION CAO1 1 (1 - EXP(-125.12812657/T)); 10000 N !
+FUNCTION CAO2 1 (1 - EXP(-598.37301449/T)); 10000 N !
+
+FUNCTION GCAO 1 -641354.1762949-112535.777764825 * EXP(-14.85294988 +
+   0.00298095 * T) + 24.9813594731112 * T * LN(CAO2)-0.00174450265 * T**(2)
+   + 23.6098190734791 * T * LN(CAO0) + 1.2953977159976 * T * LN(CAO1); 3222
+ Y (-727925.76111 + 486.19356495*T + 80.5*T*(1 - LN(T)) +
+   60.6039483894586*(-281.8126077 + 0.09083109344*T)**(-1)); 6000 N !
+$-----------------------------------------------
+$             WOLLOSTONITE                     $
+$-----------------------------------------------
+FUNCTION WCS0 1 (1 - EXP(-39.983404/T)); 10000 N !
+FUNCTION WCS1 1 (1 - EXP(-180.16112/T)); 10000 N !
+FUNCTION WCS2 1 (1 - EXP(-777.592204/T)); 10000 N !
+
+FUNCTION GWCS 1 -1647683.13184533-0.00094 * T**(2) + 90.0829704062177 * T *
+   LN(WCS2) + 0.546908722096884 * T * LN(WCS0) + 34.0286926164046 * T *
+   LN(WCS1); 6000 N !
+$-----------------------------------------------
+$             p-WOLLOSTONITE                   $
+$-----------------------------------------------
+FUNCTION PCS0 1 (1 - EXP(-398.726519/T)); 10000 N !
+FUNCTION PCS1 1 (1 - EXP(-113.639538/T)); 10000 N !
+FUNCTION PCS2 1 (1 - EXP(-1779.149444/T)); 10000 N !
+
+FUNCTION GPCS 1 -1640676.04549942-0.004177 * T**(2) + 33.3722325348509 * T *
+   LN(PCS2) + 80.0515629429532 * T * LN(PCS0) + 11.1874337167673 * T *
+   LN(PCS1); 6000 N !
+$-----------------------------------------------
+$             m-C3S                            $
+$-----------------------------------------------
+FUNCTION MC3S0 1 (1 - EXP(-216.554568/T)); 10000 N !
+FUNCTION MC3S1 1 (1 - EXP(-502.02771/T)); 10000 N !
+FUNCTION MC3S2 1 (1 - EXP(-1253.079747/T)); 10000 N !
+
+FUNCTION GMC3S 1 -2961033.87273599-0.013441 * T**(2) + 48.7852008711029 * T *
+   LN(MC3S2) + 67.8853008000012 * T * LN(MC3S0) + 107.81956498144 * T *
+   LN(MC3S1); 6000 N !
+$-----------------------------------------------
+$             t-C3S                            $
+$-----------------------------------------------
+FUNCTION TC3S0 1 (1 - EXP(-217.322399/T)); 10000 N !
+FUNCTION TC3S1 1 (1 - EXP(-511.911036/T)); 10000 N !
+FUNCTION TC3S2 1 (1 - EXP(-1306.969635/T)); 10000 N !
+
+FUNCTION GTC3S 1 -2961247.66744604 + 69.1013907314575 * T *
+   LN(TC3S0)-0.013446 * T**(2) + 45.7162163162659 * T * LN(TC3S2) +
+   109.67630088655 * T * LN(TC3S1); 6000 N !
+$-----------------------------------------------
+$             r-C3S                            $
+$-----------------------------------------------
+FUNCTION RC3S0 1 (1 - EXP(-216.897351/T)); 10000 N !
+FUNCTION RC3S1 1 (1 - EXP(-502.823393/T)); 10000 N !
+FUNCTION RC3S2 1 (1 - EXP(-1257.541676/T)); 10000 N !
+
+FUNCTION GRC3S 1 -2961047.88690192-0.013504 * T**(2) + 48.6141141738092 * T *
+   LN(RC3S2) + 68.0676369652173 * T * LN(RC3S0) + 107.809587626298 * T *
+   LN(RC3S1); 6000 N !
+$-----------------------------------------------
+$             r-C3S2                           $
+$-----------------------------------------------
+FUNCTION RC3S20 1 (1 - EXP(-201.04871065811858/T)); 10000 N !
+FUNCTION RC3S21 1 (1 - EXP(-471.75899546616546/T)); 10000 N !
+FUNCTION RC3S22 1 (1 - EXP(-1114.209221987958/T)); 10000 N !
+
+FUNCTION GRC3S2 1 -3.9933593273921650E6 + 0.001345157705172196 * T**(2) +
+   87.52997635528091 * T * LN(RC3S22) + 81.382016522242722 * T * LN(RC3S20)
+   + 130.4109304207976 * T * LN(RC3S21); 6000 N !
+$----------------------------------------------$   
+$-----------------------------------------------
+$           LIQUID PHASE FUNCTIONS             $
+$ two-state function for liquid
+$----------------------------------------------$
+$-----------------------------------------------
+$              CAO                             $
+$----------------------------------------------$
+FUNCTION CAOL0 1 (1 - EXP(-629.27558/T)); 10000 N !
+FUNCTION CAOL1 1 (1 - EXP(-234.0578/T)); 10000 N !
+$ Gdiff Term $
+FUNCTION ZCAOL0 1 (1 + EXP(0.120272355042726*(-63019.5887 + 6.2358*T +
+   0.997138715*T*LN(T))/T)); 10000 N !
+   
+FUNCTION GCAOL 1 -602797.126970587-16.6289252363065 * T *
+   LN(ZCAOL0)-0.00184186045 * T**(2) + 25.0016778330463 * T * LN(CAOL0) +
+   24.884873477673 * T * LN(CAOL1); 6000 N !
+$-----------------------------------------------
+$              SiO2                            $
+$----------------------------------------------$
+FUNCTION SIO2L0 1 (1 - EXP(-1308.6/T)); 10000 N !
+FUNCTION SIO2L1 1 (1 - EXP(-441.14/T)); 10000 N !
+FUNCTION SIO2L2 1 (1 - EXP(-105.58/T)); 10000 N !
+
+FUNCTION ZSIO2L0 1 (1 + EXP(0.120272355042726*(-33226 + 11.184*T)/T)); 10000
+   N !
+
+FUNCTION GSIO2L 1 -913715.638421418-8.31446261815324 * T * LN(ZSIO2L0) +
+   33.5987434399572 * T * LN(SIO2L0) + 9.12927995473226 * T * LN(SIO2L2) +
+   32.1021401686897 * T * LN(SIO2L1); 6000 N !
+
+$---------------------------------------------------------------------------------
+$ PHASE ENTRIES 
+$---------------------------------------------------------------------------------
+TYPE_DEFINITION % SEQ * !
+DEFINE_SYSTEM_DEFAULT ELEMENT 2 !
+
+PHASE AC2S %  2 2 1 !
+CONSTITUENT AC2S :L:Q: !
+
+PHASE ACRIS %  1 1 !
+CONSTITUENT ACRIS :Q: !
+
+PHASE APC2S %  2 2 1 !
+CONSTITUENT APC2S :L:Q: !
+
+PHASE AQUARTZ %  1 1 !
+CONSTITUENT AQUARTZ :Q: !
+
+PHASE BC2S %  2 2 1 !
+CONSTITUENT BC2S :L:Q: !
+
+PHASE BCRIS %  1 1 !
+CONSTITUENT BCRIS :Q: !
+
+PHASE BQUARTZ %  1 1 !
+CONSTITUENT BQUARTZ :Q: !
+
+PHASE CAO %  1 1 !
+CONSTITUENT CAO :L: !
+
+PHASE GC2S %  2 2 1 !
+CONSTITUENT GC2S :L:Q: !
+
+PHASE LIQUID %  1 1 !
+CONSTITUENT LIQUID :C2SL, CAOL, CSL, SIO2L: !
+
+PHASE MC3S %  2 3 1 !
+CONSTITUENT MC3S :L:Q: !
+
+PHASE PCS %  2 1 1 !
+CONSTITUENT PCS :L:Q: !
+
+PHASE RC3S %  2 3 1 !
+CONSTITUENT RC3S :L:Q: !
+
+PHASE RC3S2 %  2 3 2 !
+CONSTITUENT RC3S2 :L:Q: !
+
+PHASE TC3S %  2 3 1 !
+CONSTITUENT TC3S :L:Q: !
+
+PHASE WCS %  2 1 1 !
+CONSTITUENT WCS :L:Q: !
+
+$------------------------------------------------------------------
+$ LIQUID PARAMETERS
+$------------------------------------------------------------------
+$ ASSOCIATE VALUES 
+FUNCTION C2SL_H 1 -185132.188472035; 10000 N !
+FUNCTION C2SL_S 1 1.6; 10000 N !
+
+FUNCTION CSL_H 1 -131793.447600044; 10000 N !
+FUNCTION CSL_S 1 -12.6747313767583; 10000 N !
+
+$ INTERACTION VALUES
+FUNCTION C2SL_CAOL_L1 1 5490.98163817185; 10000 N !
+FUNCTION C2SL_SIO2L_L0T 1 -3; 10000 N !
+FUNCTION CSL_SIO2L_L0 1 206415.921620474; 10000 N !
+FUNCTION CSL_SIO2L_L0T 1 -107.044648799784; 10000 N !
+FUNCTION CSL_SIO2L_L1 1 -10306.431303854; 10000 N !
+FUNCTION CSL_SIO2L_L1T 1 -2.24993113828298; 10000 N !
+FUNCTION CSL_SIO2L_L2 1 174447.554314851; 10000 N !
+FUNCTION CSL_SIO2L_L2T 1 -64.2938830701164; 10000 N !
+
+$ END MEMBERS
+PARAMETER G(LIQUID,CAOL;0) 1 GCAOL; 6000 N !
+PARAMETER G(LIQUID,SIO2L;0) 1 GSIO2L; 6000 N !
+PARAMETER G(LIQUID,C2SL;0) 1 -1 * T * C2SL_S + 2 * GCAOL + C2SL_H + GSIO2L;
+   6000 N !
+PARAMETER G(LIQUID,CSL;0) 1 CSL_H + GCAOL-1 * T * CSL_S + GSIO2L; 6000 N !
+
+$ INTERACTION PARAMETERS
+PARAMETER L(LIQUID,C2SL,CAOL;1) 1 C2SL_CAOL_L1; 10000 N !
+PARAMETER L(LIQUID,C2SL,SIO2L;0) 1 T * C2SL_SIO2L_L0T; 10000 N !
+PARAMETER L(LIQUID,CSL,SIO2L;0) 1 T * CSL_SIO2L_L0T + CSL_SIO2L_L0; 10000 N !
+PARAMETER L(LIQUID,CSL,SIO2L;1) 1 T * CSL_SIO2L_L1T + CSL_SIO2L_L1; 10000 N !
+PARAMETER L(LIQUID,CSL,SIO2L;2) 1 T * CSL_SIO2L_L2T + CSL_SIO2L_L2; 10000 N !
+
+$------------------------------------------------------------------
+$ SOLID PARAMETERS
+$------------------------------------------------------------------
+PARAMETER G(CAO,L;0) 1 GCAO; 10000 N !
+
+PARAMETER G(ACRIS,Q;0) 1 GACRIS; 10000 N !
+PARAMETER G(AQUARTZ,Q;0) 1 GAQUARTZ; 10000 N !
+PARAMETER G(BCRIS,Q;0) 1 GBCRIS; 10000 N !
+PARAMETER G(BQUARTZ,Q;0) 1 GBQUARTZ; 10000 N !
+
+PARAMETER G(AC2S,L:Q;0) 1 GAC2S; 10000 N !
+PARAMETER G(APC2S,L:Q;0) 1 GAPC2S; 10000 N !
+PARAMETER G(BC2S,L:Q;0) 1 GBC2S; 10000 N !
+PARAMETER G(GC2S,L:Q;0) 1 GGC2S; 10000 N !
+
+PARAMETER G(MC3S,L:Q;0) 1 GMC3S; 10000 N !
+PARAMETER G(RC3S,L:Q;0) 1 GRC3S; 10000 N !
+
+PARAMETER G(RC3S2,L:Q;0) 1 GRC3S2; 10000 N !
+
+PARAMETER G(WCS,L:Q;0) 1 GWCS; 10000 N !
+PARAMETER G(PCS,L:Q;0) 1 GPCS; 10000 N !
+
+$---------------------------------------------------------------------
+$                          END 
+
+
+
+
+
