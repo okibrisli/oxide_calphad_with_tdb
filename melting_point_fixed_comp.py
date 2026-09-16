@@ -16,18 +16,18 @@ from pycalphad.core.utils import filter_phases
 TDB_FILE = Path(__file__).with_name("C_A_S_Fe_O_M.tdb")
 
 OXIDE_WT_PCT = {
-    "CaO": 48.3,
-    "SiO2": 51.7,
-    "Al2O3": 0.0,
-    "Fe2O3": 0.0,
+    "CaO": 15,
+    "SiO2": 77,
+    "Al2O3": 5,
+    "Fe2O3": 1,
     "FeO": 0.0,
-    "MgO": 0.0,
+    "MgO": 2,
 }
 
 PRESSURE_PA = 101325.0
-T_MIN_C = 1200.0
-T_MAX_C = 1600.0
-COARSE_STEP_C = 20.0
+T_MIN_C = 1000.0
+T_MAX_C = 2000.0
+COARSE_STEP_C = 100.0
 REFINEMENT_TOLERANCE_C = 0.25
 PHASE_FRACTION_TOLERANCE = 1.0e-6
 

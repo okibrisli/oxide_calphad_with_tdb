@@ -28,7 +28,7 @@ from pycalphad import Database, equilibrium, variables as v
 # ---------------------------------------------------------------
 # 1. Load the database
 # ---------------------------------------------------------------
-TDB_FILE = "../CMAS_FeO_Portland_thesis.tdb"  # the cleaned file from before
+TDB_FILE = "CMAS_FeO_Portland_thesis.tdb"  # the cleaned file from before
 dbf = Database(TDB_FILE)
 
 print("Elements in database:", sorted(dbf.elements))

@@ -31,7 +31,7 @@ from pycalphad import Database, equilibrium, variables as v
 # ---------------------------------------------------------------
 # 1. Load the database
 # ---------------------------------------------------------------
-TDB_FILE = "../Supplementary-CaO_SiO2-R2.tdb"
+TDB_FILE = "Supplementary-CaO_SiO2-R2.tdb"
 dbf = Database(TDB_FILE)
 
 print("Elements in database:", sorted(dbf.elements))
