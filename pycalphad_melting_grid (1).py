@@ -3,6 +3,12 @@
 Edit only the USER SETTINGS section for normal use. The script calculates global
 thermodynamic equilibrium at each composition and temperature, reports liquid
 phase amount milestones, and writes summary, scan, and calculation settings CSV files.
+
+Compositions can come from two sources, controlled by COMPOSITION_INPUT_MODE:
+  "CSV"  reads one or more rows from COMPOSITION_CSV_FILE. Each column header
+         must be an oxide name. Any column not recognised in OXIDE_DEFINITIONS
+         is reported and dropped (or raises an error, see DROP_UNSUPPORTED_OXIDES).
+  "GRID" builds a composition grid from COMPOSITION_RANGES, exactly as before.
 """
 
 from pathlib import Path
@@ -21,6 +27,22 @@ from pycalphad.core.utils import filter_phases
 # The TDB controls available phases, solution models, and all Gibbs energy data.
 TDB_FILE = Path(__file__).with_name("C_A_S_Fe_O_M.tdb")
 
+# Composition source. "CSV" reads COMPOSITION_CSV_FILE, "GRID" uses COMPOSITION_RANGES.
+COMPOSITION_INPUT_MODE = "CSV"
+
+# CSV file with oxide wt% compositions. One column per oxide, one row per
+# composition point. Column headers must match OXIDE_DEFINITIONS keys, for
+# example: Na2O,MgO,Al2O3,SiO2,P2O5,K2O,CaO,MnO,Fe2O3,ZrO2,HfO2
+COMPOSITION_CSV_FILE = Path(__file__).with_name("compositions_2.csv")
+
+# If True, columns in the CSV that are not in OXIDE_DEFINITIONS (because the
+# TDB does not carry that oxide component) are dropped with a printed warning
+# and the remaining oxides are used as-is. Mole fractions are renormalized
+# automatically among the kept oxides inside oxide_to_components.
+# If False, an unsupported column raises an error instead.
+DROP_UNSUPPORTED_OXIDES = True
+
+# Used only when COMPOSITION_INPUT_MODE is "GRID".
 # Each oxide has the format: (start wt%, end wt%, increment wt%).
 # If start equals end, the oxide is fixed and the increment is ignored.
 # If more than one oxide varies, all combinations are calculated.
@@ -65,7 +87,7 @@ REPORTING_PHASE_FRACTION_MIN = 1.0e-4
 
 # Print every coarse temperature point for every composition if True.
 # Keep False for large composition grids.
-PRINT_EACH_GRID_SCAN = False
+PRINT_EACH_GRID_SCAN = True
 
 # Safety limit for the number of independently generated compositions.
 MAX_CALCULATIONS = 500
@@ -88,6 +110,10 @@ CALCULATION_OPTIONS = {"pdens": 500}
 # INTERNAL CHEMISTRY MAPPING
 # Oxide molar masses, g mol minus one, and conversion to the TDB component basis.
 # Do not modify unless the component basis of the selected TDB is understood.
+# Only oxides listed here can be mapped onto this TDB's components (C, A, S, FE,
+# O, M). Other oxides that may appear in a lab analysis CSV, such as Na2O, K2O,
+# P2O5, MnO, ZrO2, or HfO2, have no component in this TDB and are dropped by
+# the CSV loader rather than silently mismapped.
 OXIDE_DEFINITIONS = {
     "CaO": (56.077, {"L": 1.0}),
     "SiO2": (60.0843, {"Q": 1.0}),
@@ -138,6 +164,12 @@ PHASE_LABELS = {
     "FCC_A1": "FCC_A1 [(Fe,O), fcc iron based solid solution]",
 }
 
+# Populated in main() with the ordered list of oxide columns actually used for
+# this run (either COMPOSITION_RANGES keys in GRID mode, or the CSV header
+# columns that survive the OXIDE_DEFINITIONS filter in CSV mode). All reporting
+# functions read this list instead of hardcoding oxide names.
+ACTIVE_OXIDES = []
+
 
 def oxide_values(start, end, step, oxide):
     start = Decimal(str(start))
@@ -161,6 +193,67 @@ def composition_grid():
     oxide_value_lists = [oxide_values(*COMPOSITION_RANGES[oxide], oxide) for oxide in oxides]
     for combination in product(*oxide_value_lists):
         yield dict(zip(oxides, combination))
+
+
+def read_compositions_csv(path):
+    """Read one or more oxide wt% composition rows from a CSV file.
+
+    Each column header is treated as an oxide name. Returns the list of
+    composition dictionaries (raw, unfiltered) and the ordered header list.
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Composition CSV file not found: {path}")
+
+    with path.open(newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
+        headers = [header.strip() for header in (reader.fieldnames or [])]
+        rows = list(reader)
+
+    if not headers:
+        raise ValueError(f"No header row found in {path}")
+    if not rows:
+        raise ValueError(f"No composition rows found in {path}")
+
+    compositions = []
+    for row_index, row in enumerate(rows, start=1):
+        composition = {}
+        for header in headers:
+            raw_value = row.get(header)
+            if raw_value is None or str(raw_value).strip() == "":
+                composition[header] = 0.0
+                continue
+            try:
+                composition[header] = float(raw_value)
+            except ValueError as error:
+                raise ValueError(
+                    f"Non numeric value '{raw_value}' for {header} in row {row_index} of {path}"
+                ) from error
+        compositions.append(composition)
+
+    return compositions, headers
+
+
+def filter_supported_oxides(raw_compositions, headers):
+    """Split CSV columns into oxides this TDB mapping supports or not, and
+    return compositions restricted to the supported columns only.
+    """
+    supported_headers = [header for header in headers if header in OXIDE_DEFINITIONS]
+    unsupported_headers = [header for header in headers if header not in OXIDE_DEFINITIONS]
+
+    if unsupported_headers and not DROP_UNSUPPORTED_OXIDES:
+        raise ValueError(
+            "CSV contains oxides with no component mapping in OXIDE_DEFINITIONS: "
+            + ", ".join(unsupported_headers)
+            + ". Add a mapping, remove the columns, or set DROP_UNSUPPORTED_OXIDES = True."
+        )
+    if not supported_headers:
+        raise ValueError("No CSV columns match a supported oxide in OXIDE_DEFINITIONS.")
+
+    filtered_compositions = [
+        {header: composition.get(header, 0.0) for header in supported_headers}
+        for composition in raw_compositions
+    ]
+    return filtered_compositions, supported_headers, unsupported_headers
 
 
 def oxide_to_components(oxide_wt_pct):
@@ -289,7 +382,7 @@ def summary_for_composition(composition_id, oxide_composition, dbf, components, 
 
     summary = {
         "composition_id": composition_id,
-        **{oxide: oxide_composition.get(oxide, 0.0) for oxide in COMPOSITION_RANGES},
+        **{oxide: oxide_composition.get(oxide, 0.0) for oxide in ACTIVE_OXIDES},
         "raw_oxide_total_wt_pct": sum(oxide_composition.values()),
         "first_liquid_boundary_degC": first_temperature,
         "scan_min_liquid_fraction_NP": scan_rows[0][1],
@@ -305,7 +398,7 @@ def summary_for_composition(composition_id, oxide_composition, dbf, components, 
     for temperature_c, liquid_fraction, stable_phases in scan_rows:
         scan_records.append({
             "composition_id": composition_id,
-            **{oxide: oxide_composition.get(oxide, 0.0) for oxide in COMPOSITION_RANGES},
+            **{oxide: oxide_composition.get(oxide, 0.0) for oxide in ACTIVE_OXIDES},
             "temperature_degC": temperature_c,
             "pressure_Pa": PRESSURE_PA,
             "liquid_fraction_NP": liquid_fraction,
@@ -320,7 +413,7 @@ def failed_summary(composition_id, composition, error):
     milestones = {f"T{int(round(x * 100)):02d}_degC": None for x in LIQUID_FRACTION_MILESTONES}
     return {
         "composition_id": composition_id,
-        **{oxide: composition.get(oxide, 0.0) for oxide in COMPOSITION_RANGES},
+        **{oxide: composition.get(oxide, 0.0) for oxide in ACTIVE_OXIDES},
         "raw_oxide_total_wt_pct": sum(composition.values()),
         "first_liquid_boundary_degC": None,
         "scan_min_liquid_fraction_NP": None,
@@ -334,17 +427,17 @@ def failed_summary(composition_id, composition, error):
 
 
 def print_summary_table(summaries):
-    fields = [
-        "composition_id", "SiO2", "Al2O3", "Fe2O3", "MgO", "CaO",
+    fixed_fields = [
         "first_liquid_boundary_degC", "scan_min_liquid_fraction_NP", "T01_degC",
         "T10_degC", "T25_degC", "T50_degC", "T75_degC", "T90_degC",
         "T95_degC", "T99_degC", "true_equilibrium_liquidus_degC",
     ]
-    labels = [
-        "Point", "SiO2", "Al2O3", "Fe2O3", "MgO", "CaO", "First liquid",
-        "Min liquid", "T01", "T10", "T25", "T50", "T75", "T90", "T95",
-        "T99", "True liquidus",
+    fixed_labels = [
+        "First liquid", "Min liquid", "T01", "T10", "T25", "T50", "T75",
+        "T90", "T95", "T99", "True liquidus",
     ]
+    fields = ["composition_id"] + list(ACTIVE_OXIDES) + fixed_fields
+    labels = ["Point"] + list(ACTIVE_OXIDES) + fixed_labels
     rows = []
 
     for summary in summaries:
@@ -384,9 +477,13 @@ def write_csv(path, records):
         writer.writerows(records)
 
 
-def write_settings_csv(compositions, components, phases):
+def write_settings_csv(compositions, components, phases, unsupported_oxides):
     rows = [
         ("Thermodynamic database", "TDB_FILE", str(TDB_FILE.resolve()), "TDB source defining phase Gibbs energies, phases, and solution models"),
+        ("Composition input", "COMPOSITION_INPUT_MODE", COMPOSITION_INPUT_MODE, "CSV reads COMPOSITION_CSV_FILE, GRID builds COMPOSITION_RANGES"),
+        ("Composition input", "COMPOSITION_CSV_FILE", str(COMPOSITION_CSV_FILE.resolve()) if COMPOSITION_INPUT_MODE == "CSV" else "", "CSV source file used for this run, if in CSV mode"),
+        ("Composition input", "DROPPED_UNSUPPORTED_OXIDES", json.dumps(unsupported_oxides), "CSV columns dropped because they have no OXIDE_DEFINITIONS mapping"),
+        ("Composition input", "ACTIVE_OXIDES", json.dumps(ACTIVE_OXIDES), "Oxide columns actually used for this run"),
         ("Pressure", "PRESSURE_PA", PRESSURE_PA, "Constant equilibrium pressure in Pa"),
         ("Temperature scan", "T_MIN_C", T_MIN_C, "Lower coarse scan temperature in degC"),
         ("Temperature scan", "T_MAX_C", T_MAX_C, "Upper coarse scan temperature in degC"),
@@ -400,8 +497,8 @@ def write_settings_csv(compositions, components, phases):
         ("Grid safety", "MAX_CALCULATIONS", MAX_CALCULATIONS, "Maximum number of generated bulk compositions"),
         ("Phases", "EXCLUDED_PHASES", json.dumps(sorted(EXCLUDED_PHASES)), "Phases explicitly omitted from equilibrium calculation"),
         ("Numerics", "CALCULATION_OPTIONS", json.dumps(CALCULATION_OPTIONS), "pycalphad equilibrium calculation options"),
-        ("Grid", "COMPOSITION_RANGES", json.dumps(COMPOSITION_RANGES), "Raw oxide wt% composition ranges"),
-        ("Grid", "COMPOSITION_POINT_COUNT", len(compositions), "Number of generated bulk compositions"),
+        ("Grid", "COMPOSITION_RANGES", json.dumps(COMPOSITION_RANGES), "Raw oxide wt% composition ranges, used only in GRID mode"),
+        ("Grid", "COMPOSITION_POINT_COUNT", len(compositions), "Number of composition points calculated in this run"),
         ("TDB system", "ACTIVE_COMPONENTS", json.dumps(components), "Union of active TDB components plus vacancy"),
         ("TDB system", "ALLOWED_PHASE_COUNT", len(phases), "Number of phases passed to pycalphad equilibrium"),
         ("TDB system", "ALLOWED_PHASES", json.dumps(phases), "Phase names available after component filtering and exclusions"),
@@ -416,13 +513,36 @@ def write_settings_csv(compositions, components, phases):
         writer.writerows(rows)
 
 
+def load_compositions():
+    """Return (compositions, active_oxides, unsupported_oxides) for the
+    configured COMPOSITION_INPUT_MODE.
+    """
+    if COMPOSITION_INPUT_MODE == "CSV":
+        raw_compositions, headers = read_compositions_csv(COMPOSITION_CSV_FILE)
+        compositions, active_oxides, unsupported_oxides = filter_supported_oxides(raw_compositions, headers)
+        return compositions, active_oxides, unsupported_oxides
+    if COMPOSITION_INPUT_MODE == "GRID":
+        return list(composition_grid()), list(COMPOSITION_RANGES), []
+    raise ValueError(f"Unknown COMPOSITION_INPUT_MODE: {COMPOSITION_INPUT_MODE!r}. Use 'CSV' or 'GRID'.")
+
+
 def main():
+    global ACTIVE_OXIDES
+
     if not 0.0 < PRACTICAL_LIQUIDUS_FRACTION <= 1.0:
         raise ValueError("PRACTICAL_LIQUIDUS_FRACTION must be greater than zero and at most one.")
     if not TDB_FILE.exists():
         raise FileNotFoundError(f"TDB file not found: {TDB_FILE}")
 
-    compositions = list(composition_grid())
+    compositions, ACTIVE_OXIDES, unsupported_oxides = load_compositions()
+
+    if unsupported_oxides:
+        print(
+            "WARNING: dropping CSV oxide columns with no TDB component mapping: "
+            + ", ".join(unsupported_oxides)
+        )
+        print("Remaining oxide amounts are used as-is and renormalized internally as mole fractions.")
+
     if len(compositions) > MAX_CALCULATIONS:
         raise ValueError(f"Grid contains {len(compositions)} points, above MAX_CALCULATIONS.")
 
@@ -430,10 +550,13 @@ def main():
     dbf = Database(str(TDB_FILE))
     components = active_tdb_components(compositions)
     phases = [phase for phase in filter_phases(dbf, components) if phase not in EXCLUDED_PHASES]
-    write_settings_csv(compositions, components, phases)
+    write_settings_csv(compositions, components, phases, unsupported_oxides)
 
     print("\nPYCALPHAD EQUILIBRIUM MELTING COMPOSITION GRID")
     print(f"TDB file: {TDB_FILE.name}")
+    print(f"Composition source: {COMPOSITION_INPUT_MODE}")
+    if COMPOSITION_INPUT_MODE == "CSV":
+        print(f"Composition CSV: {COMPOSITION_CSV_FILE.name}")
     print(f"Pressure: {PRESSURE_PA:.0f} Pa")
     print(f"Composition points: {len(compositions)}")
     print(f"Temperature range: {T_MIN_C:.2f} to {T_MAX_C:.2f} degC")
